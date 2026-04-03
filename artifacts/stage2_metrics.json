@@ -1,0 +1,57 @@
+{
+  "samples": 541,
+  "train_samples": 432,
+  "balanced_train_samples": 582,
+  "test_samples": 109,
+  "features": [
+    "LH(mIU/mL)",
+    "FSH(mIU/mL)",
+    "LH_FSH_Ratio"
+  ],
+  "threshold": 0.5,
+  "accuracy": 0.6055045871559633,
+  "confusion_matrix": [
+    [
+      48,
+      25
+    ],
+    [
+      18,
+      18
+    ]
+  ],
+  "classification_report": {
+    "0": {
+      "precision": 0.7272727272727273,
+      "recall": 0.6575342465753424,
+      "f1-score": 0.6906474820143885,
+      "support": 73.0
+    },
+    "1": {
+      "precision": 0.4186046511627907,
+      "recall": 0.5,
+      "f1-score": 0.45569620253164556,
+      "support": 36.0
+    },
+    "accuracy": 0.6055045871559633,
+    "macro avg": {
+      "precision": 0.572938689217759,
+      "recall": 0.5787671232876712,
+      "f1-score": 0.573171842273017,
+      "support": 109.0
+    },
+    "weighted avg": {
+      "precision": 0.6253273076400877,
+      "recall": 0.6055045871559633,
+      "f1-score": 0.6130488942953174,
+      "support": 109.0
+    }
+  },
+  "feature_importance_f1_permutation": {
+    "LH_FSH_Ratio": 0.08069152211502033,
+    "LH(mIU/mL)": 0.030172112152239177,
+    "FSH(mIU/mL)": 0.0031329113924050494
+  },
+  "positive_rate_test": 0.3302752293577982,
+  "average_predicted_probability": 0.4958496772577439
+}
