@@ -158,6 +158,83 @@ const dailyRoutine = [
   { time: "Night", text: "Keep dinner light and aim for good sleep." },
 ];
 
+function buildStage1Suggestions(formData, result) {
+  if (!result) {
+    return [];
+  }
+
+  const suggestions = [];
+  const addSuggestion = (condition, message) => {
+    if (condition) {
+      suggestions.push(message);
+    }
+  };
+
+  const bmiValue = Number(formData.bmi);
+  const isHighRisk = result.prediction === 1;
+
+  if (isHighRisk) {
+    suggestions.push("High PCOS risk was predicted, so please consider medical follow-up for a proper evaluation.");
+  } else {
+    suggestions.push("Low PCOS risk was predicted, so continue healthy habits and monitor your health regularly.");
+  }
+
+  addSuggestion(
+    Number.isFinite(bmiValue) && bmiValue >= 25,
+    "Your BMI is on the higher side, so do daily exercise for 30 to 45 minutes and reduce sugar, junk food, and sugary drinks."
+  );
+
+  addSuggestion(
+    Number(formData.cycle_ri) === 4,
+    "Your cycle is irregular, so focus on yoga like Surya Namaskar and Bhujangasana, maintain a good sleep cycle, and avoid stress."
+  );
+
+  addSuggestion(
+    Number(formData.weight_gain) === 1,
+    "Weight gain is present, so follow a low-carb diet, avoid fast food and soft drinks, and choose vegetables with protein-rich foods."
+  );
+
+  addSuggestion(
+    Number(formData.hair_loss) === 1,
+    "Hair loss is present, so include iron-rich foods like spinach and dates, reduce stress, and consult a doctor if it becomes severe."
+  );
+
+  addSuggestion(
+    Number(formData.hair_growth) === 1,
+    "Hair growth symptoms may suggest higher androgen levels, so regular exercise, healthy weight control, and medical consultation can help."
+  );
+
+  addSuggestion(
+    Number(formData.pimples) === 1,
+    "Pimples are present, so avoid oily food, drink more water, and eat more fruits and vegetables."
+  );
+
+  addSuggestion(
+    Number(formData.fast_food) === 1,
+    "Fast food intake is marked yes, so avoid burgers, pizza, packaged snacks, and replace them with home food and fruits."
+  );
+
+  addSuggestion(
+    Number(formData.reg_exercise) === 0,
+    "Regular exercise is marked no, so start with 30 minutes of walking daily and gradually add simple workouts."
+  );
+
+  addSuggestion(
+    Number(formData.skin_darkening) === 1,
+    "Skin darkening may be related to insulin resistance, so control sugar intake and exercise regularly."
+  );
+
+  if (!isHighRisk) {
+    suggestions.push("Maintain a balanced diet, continue regular exercise, avoid junk food, and manage stress well.");
+  }
+
+  if (isHighRisk && suggestions.length === 1) {
+    suggestions.push("Focus on healthy food, regular activity, proper sleep, and an early doctor consultation for more guidance.");
+  }
+
+  return [...new Set(suggestions)];
+}
+
 function HomePage({ onOpenStage1, onOpenStage2 }) {
   const [activeSection, setActiveSection] = useState("about");
 
@@ -436,12 +513,38 @@ function HomePage({ onOpenStage1, onOpenStage2 }) {
 }
 
 function Stage1Page({ formData, setFormData, result, setResult, error, setError, loading, setLoading, onBack }) {
+  const [heightCm, setHeightCm] = useState("");
+  const suggestions = buildStage1Suggestions(formData, result);
+
   const handleChange = (event) => {
     const { name, value } = event.target;
     setFormData((current) => ({
       ...current,
       [name]: value === "" ? "" : Number(value),
     }));
+  };
+
+  const calculateBmi = () => {
+    const weightValue = Number(formData.weight);
+    const heightValue = Number(heightCm);
+
+    if (!weightValue || !heightValue) {
+      setError("Enter weight and height to calculate BMI.");
+      return;
+    }
+
+    const heightInMeters = heightValue / 100;
+    if (heightInMeters <= 0) {
+      setError("Height must be greater than zero.");
+      return;
+    }
+
+    const bmiValue = Number((weightValue / (heightInMeters * heightInMeters)).toFixed(2));
+    setFormData((current) => ({
+      ...current,
+      bmi: bmiValue,
+    }));
+    setError("");
   };
 
   const handleSubmit = async (event) => {
@@ -495,6 +598,31 @@ function Stage1Page({ formData, setFormData, result, setResult, error, setError,
                       <option key={`${field.name}-${option.value}`} value={option.value}>{option.label}</option>
                     ))}
                   </select>
+                ) : field.name === "bmi" ? (
+                  <div className="bmi-stack">
+                    <input
+                      name={field.name}
+                      type={field.type}
+                      step={field.step}
+                      value={formData[field.name]}
+                      onChange={handleChange}
+                      placeholder={`Enter ${field.label}`}
+                      required
+                    />
+                    <div className="bmi-helper">
+                      <input
+                        className="bmi-helper-input"
+                        type="number"
+                        step="any"
+                        value={heightCm}
+                        onChange={(event) => setHeightCm(event.target.value)}
+                        placeholder="Enter Height (cm)"
+                      />
+                      <button className="secondary-button bmi-button" type="button" onClick={calculateBmi}>
+                        Calculate Your BMI
+                      </button>
+                    </div>
+                  </div>
                 ) : (
                   <input
                     name={field.name}
@@ -517,6 +645,7 @@ function Stage1Page({ formData, setFormData, result, setResult, error, setError,
               type="button"
               onClick={() => {
                 setFormData(initialStage1Form);
+                setHeightCm("");
                 setResult(null);
                 setError("");
               }}
@@ -534,6 +663,14 @@ function Stage1Page({ formData, setFormData, result, setResult, error, setError,
               <h2>{result.risk_label}</h2>
               <p className="probability">Probability of PCOS: {(result.probability * 100).toFixed(2)}%</p>
               <p className="class-line">Predicted Class: {result.prediction}</p>
+              <div className="suggestion-block">
+                <h3>Suggestions</h3>
+                <ul className="suggestion-list">
+                  {suggestions.map((suggestion) => (
+                    <li key={suggestion}>{suggestion}</li>
+                  ))}
+                </ul>
+              </div>
             </>
           ) : (
             <p className="placeholder">Enter the symptom values and submit the form to view the prediction result.</p>
