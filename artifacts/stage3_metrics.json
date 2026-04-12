@@ -1,0 +1,92 @@
+{
+  "samples": 30000,
+  "train_samples": 24000,
+  "test_samples": 6000,
+  "features": [
+    "Age",
+    "Weight",
+    "Height",
+    "BMI",
+    "FSH",
+    "LH",
+    "LH_FSH_Ratio",
+    "TSH",
+    "AMH",
+    "Cycle_Length",
+    "Cycle_Regular",
+    "Weight_Gain",
+    "Hair_Growth",
+    "Skin_Darkening",
+    "Hair_Loss",
+    "Pimples",
+    "Fast_Food",
+    "Exercise",
+    "Follicle_Left",
+    "Follicle_Right"
+  ],
+  "threshold": 0.5,
+  "accuracy": 0.9963333333333333,
+  "confusion_matrix": [
+    [
+      894,
+      12
+    ],
+    [
+      10,
+      5084
+    ]
+  ],
+  "classification_report": {
+    "0": {
+      "precision": 0.9889380530973452,
+      "recall": 0.9867549668874173,
+      "f1-score": 0.9878453038674033,
+      "support": 906.0
+    },
+    "1": {
+      "precision": 0.9976452119309263,
+      "recall": 0.9980369061641147,
+      "f1-score": 0.9978410206084396,
+      "support": 5094.0
+    },
+    "accuracy": 0.9963333333333333,
+    "macro avg": {
+      "precision": 0.9932916325141357,
+      "recall": 0.992395936525766,
+      "f1-score": 0.9928431622379215,
+      "support": 6000.0
+    },
+    "weighted avg": {
+      "precision": 0.9963304309470554,
+      "recall": 0.9963333333333333,
+      "f1-score": 0.9963316673805431,
+      "support": 6000.0
+    }
+  },
+  "feature_importance_f1_permutation": {
+    "Cycle_Regular": 0.08528775844251402,
+    "AMH": 0.07716640880663482,
+    "Hair_Growth": 0.02588441856626964,
+    "Hair_Loss": 0.02035402196872691,
+    "Cycle_Length": 0.004790991316671267,
+    "LH_FSH_Ratio": 0.0015088530623949769,
+    "Weight": 0.0006460847532724024,
+    "Weight_Gain": 0.00037297632222789147,
+    "BMI": 0.0003428111505092146,
+    "Skin_Darkening": 0.00015715360564496627,
+    "Exercise": 3.936988629642535e-05,
+    "Height": -0.00012778298175307733,
+    "Pimples": -0.00017676117563431015,
+    "Fast_Food": -0.0003434112562485492,
+    "FSH": -0.00034345565001056013,
+    "TSH": -0.00041219766061494355,
+    "LH": -0.00042143412261452795,
+    "Age": -0.00045139205193195364,
+    "Follicle_Left": -0.00047110196866846367,
+    "Follicle_Right": -0.0005105661225421776
+  },
+  "positive_rate_test": 0.849,
+  "average_predicted_probability": 0.8491894955721331,
+  "dataset_name": "pcos data.xlsx",
+  "sheet_name": "Sheet1"
+}

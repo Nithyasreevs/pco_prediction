@@ -8,3 +8,4 @@ pillow==10.4.0
 pytesseract==0.3.13
 pymupdf==1.27.2.2
 gunicorn==23.0.0
+pymongo==4.10.1

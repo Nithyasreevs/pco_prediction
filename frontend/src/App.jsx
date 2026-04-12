@@ -1,6 +1,8 @@
 import { useState } from "react";
+import MenstrualTrackerShell from "./tracker/TrackerShell";
 
 const API_BASE_URL = (import.meta.env.VITE_API_BASE_URL || "http://127.0.0.1:5000").replace(/\/$/, "");
+const TRACKER_API_BASE_URL = API_BASE_URL;
 
 const initialStage1Form = {
   age: "",
@@ -15,6 +17,29 @@ const initialStage1Form = {
   pimples: "",
   fast_food: "",
   reg_exercise: "",
+};
+
+const initialStage3Form = {
+  age: "",
+  weight: "",
+  height: "",
+  bmi: "",
+  fsh: "",
+  lh: "",
+  lh_fsh_ratio: "",
+  tsh: "",
+  amh: "",
+  cycle_length: "",
+  cycle_regular: "",
+  weight_gain: "",
+  hair_growth: "",
+  skin_darkening: "",
+  hair_loss: "",
+  pimples: "",
+  fast_food: "",
+  exercise: "",
+  follicle_left: "",
+  follicle_right: "",
 };
 
 const stage1Fields = [
@@ -43,6 +68,29 @@ const stage1Fields = [
 const binaryOptions = [
   { label: "No", value: 0 },
   { label: "Yes", value: 1 },
+];
+
+const stage3Fields = [
+  { name: "age", label: "Age", type: "number", step: "any" },
+  { name: "weight", label: "Weight", type: "number", step: "any" },
+  { name: "height", label: "Height", type: "number", step: "any" },
+  { name: "bmi", label: "BMI", type: "number", step: "any" },
+  { name: "fsh", label: "FSH", type: "number", step: "any" },
+  { name: "lh", label: "LH", type: "number", step: "any" },
+  { name: "lh_fsh_ratio", label: "LH/FSH Ratio", type: "number", step: "any" },
+  { name: "tsh", label: "TSH", type: "number", step: "any" },
+  { name: "amh", label: "AMH", type: "number", step: "any" },
+  { name: "cycle_length", label: "Cycle Length", type: "number", step: "any" },
+  { name: "cycle_regular", label: "Cycle Regular", type: "select", options: binaryOptions },
+  { name: "weight_gain", label: "Weight Gain", type: "select", options: binaryOptions },
+  { name: "hair_growth", label: "Hair Growth", type: "select", options: binaryOptions },
+  { name: "skin_darkening", label: "Skin Darkening", type: "select", options: binaryOptions },
+  { name: "hair_loss", label: "Hair Loss", type: "select", options: binaryOptions },
+  { name: "pimples", label: "Pimples", type: "select", options: binaryOptions },
+  { name: "fast_food", label: "Fast Food", type: "select", options: binaryOptions },
+  { name: "exercise", label: "Exercise", type: "select", options: binaryOptions },
+  { name: "follicle_left", label: "Follicle Left", type: "number", step: "any" },
+  { name: "follicle_right", label: "Follicle Right", type: "number", step: "any" },
 ];
 
 const symptomTags = [
@@ -88,8 +136,8 @@ const steps = [
   },
   {
     number: "3",
-    title: "Get both results individually",
-    text: "Compare symptom-based screening and lab-based screening to understand PCOS risk more clearly.",
+    title: "Stage 3: Combined clinical model",
+    text: "Use the full clinical feature set from the larger PCOS dataset for the most comprehensive prediction stage.",
   },
 ];
 
@@ -235,7 +283,48 @@ function buildStage1Suggestions(formData, result) {
   return [...new Set(suggestions)];
 }
 
-function HomePage({ onOpenStage1, onOpenStage2 }) {
+function buildStage2Suggestions(result) {
+  if (!result) {
+    return [];
+  }
+
+  const suggestions = [];
+  const lhValue = Number(result.lh);
+  const fshValue = Number(result.fsh);
+  const ratio = fshValue > 0 ? lhValue / fshValue : 0;
+  const isHighRisk = result.prediction === 1;
+
+  if (isHighRisk) {
+    suggestions.push("High PCOS risk was predicted from the lab values, so please consult a doctor for further evaluation.");
+    suggestions.push("Follow a healthy diet, avoid fast food and sugary drinks, and maintain regular physical activity.");
+  } else {
+    suggestions.push("Low PCOS risk was predicted from the lab values, so continue a healthy lifestyle and regular health monitoring.");
+  }
+
+  if (ratio >= 2) {
+    suggestions.push("The LH to FSH balance appears elevated, which can be associated with hormonal imbalance, so medical follow-up is recommended.");
+  }
+
+  if (lhValue >= 10) {
+    suggestions.push("LH value is on the higher side, so maintain stress control, regular exercise, and proper sleep habits.");
+  }
+
+  if (fshValue < 5) {
+    suggestions.push("Lower FSH value may indicate hormonal variation, so regular clinical monitoring is advisable.");
+  }
+
+  if (!isHighRisk) {
+    suggestions.push("Maintain balanced food habits, continue exercise, and go for periodic health checkups.");
+  }
+
+  if (isHighRisk && suggestions.length === 2) {
+    suggestions.push("Maintain proper diet, regular physical activity, and follow up with a healthcare professional for guidance.");
+  }
+
+  return [...new Set(suggestions)];
+}
+
+function HomePage({ onOpenStage1, onOpenStage2, onOpenStage3, onOpenTracker }) {
   const [activeSection, setActiveSection] = useState("about");
 
   const renderSection = () => {
@@ -300,7 +389,7 @@ function HomePage({ onOpenStage1, onOpenStage2 }) {
               <span> lab analysis</span>
             </h2>
             <p>
-              Stage 1 predicts PCOS risk from symptoms, and Stage 2 predicts PCOS risk from LH and FSH values extracted from a blood report.
+              Stage 1 predicts PCOS risk from symptoms, Stage 2 predicts from LH and FSH values, and Stage 3 uses the full clinical feature set from the larger PCOS dataset.
             </p>
           </div>
           <div className="step-list solo-steps">
@@ -319,7 +408,10 @@ function HomePage({ onOpenStage1, onOpenStage2 }) {
               Open Stage 1
             </button>
             <button className="secondary-button" type="button" onClick={onOpenStage2}>
-              Upload Report and Predict
+              Open Stage 2
+            </button>
+            <button className="secondary-button" type="button" onClick={onOpenStage3}>
+              Open Stage 3
             </button>
           </div>
         </section>
@@ -419,8 +511,8 @@ function HomePage({ onOpenStage1, onOpenStage2 }) {
             <p>Upload or paste a blood report so LH and FSH can be used for lab-based screening.</p>
           </div>
           <div className="resource-item">
-            <h3>Clinical follow-up</h3>
-            <p>Use the project output as supporting information when discussing symptoms or lab findings with a doctor.</p>
+            <h3>Stage 3</h3>
+            <p>Use the full-feature combined model trained on the larger PCOS dataset for the strongest clinical prediction stage.</p>
           </div>
         </div>
       </section>
@@ -450,6 +542,11 @@ function HomePage({ onOpenStage1, onOpenStage2 }) {
             </button>
           ))}
         </nav>
+        <div className="header-cta-wrap">
+          <button className="primary-button tracker-entry-button" type="button" onClick={onOpenTracker}>
+            Track Your Menstrual Cycle
+          </button>
+        </div>
       </header>
 
       <section className="hero-section">
@@ -461,14 +558,17 @@ function HomePage({ onOpenStage1, onOpenStage2 }) {
             early
           </h1>
           <p className="hero-copy">
-            Polycystic Ovary Syndrome affects many women worldwide. Use Stage 1 for symptom screening or Stage 2 to upload a blood report and predict from LH and FSH values.
+            Polycystic Ovary Syndrome affects many women worldwide. Use Stage 1 for screening, Stage 2 for LH and FSH lab analysis, or Stage 3 for a full-feature combined prediction model.
           </p>
           <div className="hero-actions">
             <button className="primary-button" type="button" onClick={onOpenStage1}>
               Stage 1 Predict
             </button>
             <button className="secondary-button" type="button" onClick={onOpenStage2}>
-              Upload Report and Predict
+              Stage 2 Predict
+            </button>
+            <button className="secondary-button" type="button" onClick={onOpenStage3}>
+              Stage 3 Combined
             </button>
           </div>
         </div>
@@ -476,9 +576,9 @@ function HomePage({ onOpenStage1, onOpenStage2 }) {
         <div className="hero-visual">
           <div className="ring-shell">
             <div className="ring-core">
-              <strong>2</strong>
+              <strong>3</strong>
               <span>stages</span>
-              <p>symptom-based and lab-based PCOS screening</p>
+              <p>screening, lab analysis, and full-feature combined prediction</p>
             </div>
           </div>
           <span className="floating-dot dot-one" />
@@ -494,11 +594,11 @@ function HomePage({ onOpenStage1, onOpenStage2 }) {
         </article>
         <article>
           <strong>Stage 2</strong>
-          <span>lab report analysis</span>
+          <span>LH and FSH analysis</span>
         </article>
         <article>
-          <strong>LH + FSH</strong>
-          <span>blood-test based prediction</span>
+          <strong>Stage 3</strong>
+          <span>combined full-feature model</span>
         </article>
       </section>
 
@@ -681,6 +781,45 @@ function Stage1Page({ formData, setFormData, result, setResult, error, setError,
   );
 }
 
+function buildStage3Suggestions(formData, result) {
+  if (!result) {
+    return [];
+  }
+
+  const suggestions = [];
+  const isHighRisk = result.prediction === 1;
+  const bmiValue = Number(formData.bmi);
+  const amhValue = Number(formData.amh);
+  const ratioValue = Number(formData.lh_fsh_ratio) || (Number(formData.fsh) > 0 ? Number(formData.lh) / Number(formData.fsh) : 0);
+
+  if (isHighRisk) {
+    suggestions.push("High PCOS risk was predicted from the full-feature combined model, so medical follow-up is strongly recommended.");
+  } else {
+    suggestions.push("Low PCOS risk was predicted from the combined model, so continue healthy habits and regular monitoring.");
+  }
+
+  if (bmiValue >= 25) {
+    suggestions.push("BMI is elevated, so maintain regular exercise and reduce sugar and junk food intake.");
+  }
+  if (Number(formData.cycle_regular) === 0) {
+    suggestions.push("Cycle regularity is low, so focus on sleep, stress control, and yoga-based hormonal support.");
+  }
+  if (amhValue >= 4) {
+    suggestions.push("AMH appears elevated, so clinical consultation is advised for better hormonal evaluation.");
+  }
+  if (ratioValue >= 2) {
+    suggestions.push("The LH/FSH ratio is high, which may indicate hormonal imbalance, so follow up with a doctor.");
+  }
+  if (Number(formData.weight_gain) === 1 || Number(formData.fast_food) === 1) {
+    suggestions.push("Weight-related or diet-related risk is present, so choose a balanced low-sugar diet and avoid processed foods.");
+  }
+  if (Number(formData.exercise) === 0) {
+    suggestions.push("Exercise is marked low, so begin with simple daily walking and regular physical activity.");
+  }
+
+  return [...new Set(suggestions)];
+}
+
 function Stage2Page({ onBack }) {
   const [reportFile, setReportFile] = useState(null);
   const [reportText, setReportText] = useState("");
@@ -690,6 +829,7 @@ function Stage2Page({ onBack }) {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const [extracting, setExtracting] = useState(false);
+  const suggestions = buildStage2Suggestions(result);
 
   const handleExtract = async () => {
     setExtracting(true);
@@ -812,9 +952,220 @@ function Stage2Page({ onBack }) {
               <h2>{result.risk_label}</h2>
               <p className="probability">Probability of PCOS: {(result.probability * 100).toFixed(2)}%</p>
               <p className="class-line">LH: {result.lh} | FSH: {result.fsh}</p>
+              <div className="suggestion-block">
+                <h3>Suggestions</h3>
+                <ul className="suggestion-list">
+                  {suggestions.map((suggestion) => (
+                    <li key={suggestion}>{suggestion}</li>
+                  ))}
+                </ul>
+              </div>
             </>
           ) : (
             <p className="placeholder">Upload a report, paste report text, or enter LH and FSH values manually to view the lab-based result.</p>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function Stage3Page({ formData, setFormData, result, setResult, error, setError, loading, setLoading, onBack }) {
+  const [reportFiles, setReportFiles] = useState([]);
+  const [reportText, setReportText] = useState("");
+  const [extracting, setExtracting] = useState(false);
+  const [reportMessage, setReportMessage] = useState("");
+  const suggestions = buildStage3Suggestions(formData, result);
+
+  const handleChange = (event) => {
+    const { name, value } = event.target;
+    const numericValue = value === "" ? "" : Number(value);
+    setFormData((current) => {
+      const next = { ...current, [name]: numericValue };
+      const lhValue = name === "lh" ? Number(value) : Number(next.lh);
+      const fshValue = name === "fsh" ? Number(value) : Number(next.fsh);
+      if (name === "lh" || name === "fsh") {
+        next.lh_fsh_ratio = fshValue > 0 ? Number((lhValue / fshValue).toFixed(2)) : "";
+      }
+      return next;
+    });
+  };
+
+  const handleExtract = async () => {
+    setExtracting(true);
+    setError("");
+    setReportMessage("");
+    setResult(null);
+
+    try {
+      const payload = new FormData();
+      reportFiles.forEach((file) => {
+        payload.append("report_files", file);
+      });
+      if (reportText.trim()) {
+        payload.append("report_text", reportText);
+      }
+
+      const response = await fetch(`${API_BASE_URL}/upload-stage3-report`, {
+        method: "POST",
+        body: payload,
+      });
+      const data = await response.json();
+      if (!response.ok) {
+        throw new Error(data.error || "Stage 3 report extraction failed.");
+      }
+
+      setFormData((current) => ({
+        ...current,
+        ...data.extracted_values,
+      }));
+      setReportMessage("Report values were extracted and filled into the form. Please complete the remaining fields and submit Stage 3.");
+    } catch (requestError) {
+      setError(requestError.message);
+    } finally {
+      setExtracting(false);
+    }
+  };
+
+  const handleSubmit = async (event) => {
+    event.preventDefault();
+    setLoading(true);
+    setError("");
+
+    try {
+      const response = await fetch(`${API_BASE_URL}/predict-stage3`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(formData),
+      });
+
+      const data = await response.json();
+      if (!response.ok) {
+        throw new Error(data.error || "Stage 3 prediction request failed.");
+      }
+      setResult(data);
+    } catch (requestError) {
+      setResult(null);
+      setError(requestError.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div className="predict-page-shell">
+      <div className="predict-card">
+        <div className="predict-topbar">
+          <button className="back-link" type="button" onClick={onBack}>Back to Home</button>
+          <p className="predict-badge">Stage 3 | Combined clinical model</p>
+        </div>
+
+        <div className="predict-header">
+          <p className="section-kicker">Stage 3</p>
+          <h1>Stage 3 Combined Prediction Form</h1>
+          <p>Upload report files for FSH, LH, LH/FSH ratio, TSH, AMH, and follicle values. Enter the remaining screening details manually.</p>
+        </div>
+
+        <div className="stage2-grid">
+          <section className="stage2-panel">
+            <label className="field">
+              <span>Upload 1 to 3 report files</span>
+              <input
+                type="file"
+                multiple
+                accept=".txt,.csv,.pdf,.png,.jpg,.jpeg,.bmp,.tif,.tiff"
+                onChange={(event) => setReportFiles(Array.from(event.target.files || []).slice(0, 3))}
+              />
+            </label>
+
+            <label className="field">
+              <span>Or paste report text</span>
+              <textarea
+                className="report-textarea"
+                value={reportText}
+                onChange={(event) => setReportText(event.target.value)}
+                placeholder="Example: LH: 12.5, FSH: 6.8, TSH: 2.4, AMH: 5.1, Follicle No. (Left Ovary): 16, Follicle No. (Right Ovary): 14"
+              />
+            </label>
+
+            <div className="predict-actions">
+              <button className="primary-button" type="button" onClick={handleExtract} disabled={extracting}>
+                {extracting ? "Extracting..." : "Extract Report Values"}
+              </button>
+            </div>
+
+            <p className="placeholder">Auto-fill fields: FSH, LH, LH/FSH Ratio, TSH, AMH, Follicle Left, and Follicle Right.</p>
+          </section>
+
+          <section className="stage2-panel">
+            <form className="predict-form" onSubmit={handleSubmit}>
+              <div className="form-grid">
+                {stage3Fields.map((field) => (
+                  <label className="field" key={field.name}>
+                    <span>{field.label}</span>
+                    {field.type === "select" ? (
+                      <select name={field.name} value={formData[field.name]} onChange={handleChange} required>
+                        <option value="" disabled>Select an option</option>
+                        {(field.options || binaryOptions).map((option) => (
+                          <option key={`${field.name}-${option.value}`} value={option.value}>{option.label}</option>
+                        ))}
+                      </select>
+                    ) : (
+                      <input
+                        name={field.name}
+                        type={field.type}
+                        step={field.step}
+                        value={formData[field.name]}
+                        onChange={handleChange}
+                        placeholder={`Enter ${field.label}`}
+                        required
+                      />
+                    )}
+                  </label>
+                ))}
+              </div>
+
+              <div className="predict-actions">
+                <button className="primary-button" type="submit" disabled={loading}>{loading ? "Predicting..." : "Predict Stage 3 Risk"}</button>
+                <button
+                  className="secondary-button"
+                  type="button"
+                  onClick={() => {
+                    setFormData(initialStage3Form);
+                    setReportFiles([]);
+                    setReportText("");
+                    setReportMessage("");
+                    setResult(null);
+                    setError("");
+                  }}
+                >
+                  Clear Form
+                </button>
+              </div>
+            </form>
+          </section>
+        </div>
+
+        <div className="result-card">
+          {error ? <p className="error-text">{error}</p> : null}
+          {reportMessage ? <p className="class-line">{reportMessage}</p> : null}
+          {result ? (
+            <>
+              <p className="section-kicker">Stage 3 Result</p>
+              <h2>{result.risk_label}</h2>
+              <p className="probability">Probability of PCOS: {(result.probability * 100).toFixed(2)}%</p>
+              <p className="class-line">Predicted Class: {result.prediction}</p>
+              <div className="suggestion-block">
+                <h3>Suggestions</h3>
+                <ul className="suggestion-list">
+                  {suggestions.map((suggestion) => (
+                    <li key={suggestion}>{suggestion}</li>
+                  ))}
+                </ul>
+              </div>
+            </>
+          ) : (
+            <p className="placeholder">Upload up to 3 report files to auto-fill report values, then enter the remaining Stage 3 details and submit.</p>
           )}
         </div>
       </div>
@@ -828,13 +1179,25 @@ export default function App() {
   const [stage1Result, setStage1Result] = useState(null);
   const [stage1Error, setStage1Error] = useState("");
   const [stage1Loading, setStage1Loading] = useState(false);
+  const [stage3FormData, setStage3FormData] = useState(initialStage3Form);
+  const [stage3Result, setStage3Result] = useState(null);
+  const [stage3Error, setStage3Error] = useState("");
+  const [stage3Loading, setStage3Loading] = useState(false);
 
   if (currentPage === "home") {
-    return <HomePage onOpenStage1={() => setCurrentPage("stage1")} onOpenStage2={() => setCurrentPage("stage2")} />;
+    return <HomePage onOpenStage1={() => setCurrentPage("stage1")} onOpenStage2={() => setCurrentPage("stage2")} onOpenStage3={() => setCurrentPage("stage3")} onOpenTracker={() => setCurrentPage("tracker")} />;
   }
 
   if (currentPage === "stage2") {
     return <Stage2Page onBack={() => setCurrentPage("home")} />;
+  }
+
+  if (currentPage === "tracker") {
+    return <MenstrualTrackerShell apiBaseUrl={TRACKER_API_BASE_URL} onBack={() => setCurrentPage("home")} />;
+  }
+
+  if (currentPage === "stage3") {
+    return <Stage3Page formData={stage3FormData} setFormData={setStage3FormData} result={stage3Result} setResult={setStage3Result} error={stage3Error} setError={setStage3Error} loading={stage3Loading} setLoading={setStage3Loading} onBack={() => setCurrentPage("home")} />;
   }
 
   return (
